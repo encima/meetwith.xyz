@@ -1,0 +1,114 @@
+<html>
+
+<head>
+  <!-- Note this code is pretty fugly, it needs to be rewritten -->
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <style>
+    #descr {
+      width: 42em;
+    }
+
+    input[type="submit"] {
+      font-size: 1.2em;
+      border-radius: 5px;
+      border: 1px solid black;
+      margin-top: 1ex;
+    }
+
+    hr {
+      border: 1px solid black;
+    }
+
+    .center {
+      text-align: center;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.3.2/main.css" integrity="sha256-ejA/z0dc7D+StbJL/0HAnRG/Xae3yS2gzg0OAnIURC4=" crossorigin="anonymous">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.3.2/main.min.js" integrity="sha256-mMw9aRRFx9TK/L0dn25GKxH/WH7rtFTp+P9Uma+2+zc=" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/ical.js@1.4.0/build/ical.js"></script>
+  <script src="./lib/js/ical_fullcalendar.js"></script>
+  <script src="./lib/js/ical_events.js"></script>
+  <script type="text/javascript">
+    
+
+    function data_req(url, callback) {
+      req = new XMLHttpRequest()
+      req.addEventListener('load', callback)
+      req.open('GET', url)
+      req.send()
+    }
+
+    function getRandomColour() {
+      var hex = '0123456789ABCDEF';
+      var colour = '#';
+      for (var i = 0; i < 6; i++) {
+        colour += hex[Math.floor(Math.random() * 16)];
+      }
+      return colour;
+    }
+
+    function load_ics(url) {
+      let tz = "Europe/Zurich"
+      data_req(url, function () {
+        const parsedCal = ICAL.parse(this.response)
+        
+        const calProps = new ICAL.Component(parsedCal).getAllProperties()
+        calProps.forEach(function(prop) {
+          if (prop.hasOwnProperty('jCal') && prop['jCal'].indexOf("x-wr-calname") !== -1) {
+            const calName = prop['jCal'][3]
+            $('#calendars').append(`<li>${calName}</li>`)    
+          }
+          if (prop.hasOwnProperty('jCal') && prop['jCal'].indexOf("x-wr-timezone") !== -1) {
+            tz = prop['jCal'][3]
+          }
+        })
+        cal.addEventSource(fc_events(parsedCal, tz, { color: getRandomColour() }))
+      })
+    }
+
+    function config_init() {
+      const queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      const cals = urlParams.getAll('cal')
+      const when = urlParams.get('whenDate')
+      
+      const el = document.getElementById('calendar');
+      cal = new FullCalendar.Calendar(el, {
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        initialDate: when,
+        initialView: 'timeGridDay',
+        editable: true,
+      })
+      
+      cal.render()
+      cals.forEach(function (ics) {
+        load_ics(ics)
+      })
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      config_init()
+      cal.render()
+    })
+
+
+
+
+  </script>
+</head>
+
+<body>
+  <h1 class="center">Meet With:</h1>
+  <div id="config">
+    <ul id="calendars">
+    </ul>
+  </div>
+  <div id="calendar"></div>
+</body>
+
+</html>
