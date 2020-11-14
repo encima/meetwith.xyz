@@ -16,5 +16,6 @@
 
 ## Links
 
-[ical.js docs](https://mozilla-comm.github.io/ical.js/api/)
-[My public Aiven Calendar Feed](https://calendar.google.com/calendar/ical/chrisg%40aiven.io/public/basic.ics)
+* [ical.js docs](https://mozilla-comm.github.io/ical.js/api/)
+* [My public Aiven Calendar Feed](https://calendar.google.com/calendar/ical/chrisg%40aiven.io/public/basic.ics)
+* [FullCalendar Docs](https://fullcalendar.io/docs/date-clicking-selecting)

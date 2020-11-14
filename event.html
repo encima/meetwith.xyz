@@ -8,10 +8,6 @@
       width: 42em;
     }
 
-    #booker {
-      display: none;
-    }
-
     input[type="submit"] {
       font-size: 1.2em;
       border-radius: 5px;
@@ -36,18 +32,14 @@
   <script src="https://unpkg.com/ical.js@1.4.0/build/ical.js"></script>
   <script src="./lib/js/ical_fullcalendar.js"></script>
   <script src="./lib/js/ical_events.js"></script>
-  <script src="./lib/js/index.js"></script>
+  <script src="./lib/js/event.js"></script>
 </head>
 
 <body>
   <h1 class="center">Meet With:</h1>
-  <div id="config" class="center">
-    <ul id="calendars">
-    </ul>
-    <input id="new-ics" placeholder="Add a Calendar URL" type="url"></input>
-    <h3 id="booker">Book?</h3>
+  <div id="event" class="center">div>
+    <h3 id="evt">Event Details</h3>
   </div>
-  <div id="calendar"></div>
 </body>
 
 </html>
