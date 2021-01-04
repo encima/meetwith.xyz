@@ -1,29 +1,32 @@
 <script>
-	  import { getContext } from 'svelte';
-	  export let message;
-		export let hasForm = false;
-		export let onCancel = () => {};
-		export let onOkay = () => {};
+	import { getContext } from 'svelte';
+	import {dndzone} from 'svelte-dnd-action';
+	export let message;
+	export let saved = [];
+	export let current = [];
+	export let hasForm = false;
+	export let onCancel = () => {};
+	export let onOkay = () => {};
 	
-	  const { close } = getContext('simple-modal');
+	const { close } = getContext('simple-modal');
 		
-		let value;
-		let onChange = () => {};
+	let value;
+	let onChange = () => {};
 		
-		function _onCancel() {
-			onCancel();
-			close();
-		}
+	function _onCancel() {
+		onCancel();
+		close();
+	}
 		
-		function _onOkay() {
-			onOkay(value);
-			close();
-		}
-		
-		$: onChange(value)
-	</script>
+	function _onOkay() {
+		onOkay(value);
+		close();
+	}
 	
-	<style>
+	$: onChange(value)
+</script>
+	
+<style>
 	  h2 {
 			font-size: 2rem;
 			text-align: center;
@@ -44,7 +47,7 @@
 			right: 0;
 			background: black;
 		}
-	</style>
+</style>
 	
 	<button class="close" on:click={_onCancel}>
 		Close

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import {current, saved} from './store.js';
 	import { Calendar, flexibleCompare } from "@fullcalendar/core";
 	import dayGridPlugin from "@fullcalendar/daygrid";
 	import timeGridDay from "@fullcalendar/timegrid";
@@ -6,10 +7,11 @@
 	import { openDB, DBSchema, deleteDB, wrap, unwrap } from "idb";
 	import { onMount } from "svelte";
 	import Modal from "./Modal.svelte";
-	import ModalContent from "./ModalContent.svelte"
+	import ModalContent from "./ModalContent.svelte";
+	import MenuList from "./List.svelte";
 	import ICAL from "ical.js"
 	export let name: string;
-
+	
 	interface CalSource {
 		id?: number;
 		url?: string;
@@ -41,34 +43,24 @@
 				const peopleStore = db.createObjectStore("people");
 			},
 		});
-		// dbInit();
+		
 		configInit();
+		
 		(layout = document.getElementById("layout")),
 			(menu = document.getElementById("menu")),
 			(menuLink = document.getElementById("menuLink"));
 		document.addEventListener("click", handleEvent);
-		document.getElementById("files").addEventListener("change", readCsv);
+		
+	
 	});
 
-	// function getIndex() {
-	// 	db.transaction('rw', db.cals, async() => {
-	// 		return await db.cals.where({name: 'Josephine'}).count()) === 0) ;
-
-	// 	});
-	// }
-
-	var layout = document.getElementById("layout"),
+	let layout = document.getElementById("layout"),
 		menu = document.getElementById("menu"),
 		menuLink = document.getElementById("menuLink");
 
 	let sources = {};
 
-	function makeRequest(url, callback) {
-		const req = new XMLHttpRequest();
-		req.addEventListener("load", callback);
-		req.open("GET", url);
-		req.send();
-	}
+	
 
 	function getRandomColour() {
 		var hex = "0123456789ABCDEF";
@@ -79,46 +71,7 @@
 		return colour;
 	}
 
-	async function loadICS(url) {
-		let tz = "Europe/Zurich";
-
-		makeRequest(url, function () {
-			const parsedCal = ICAL.parse(this.response);
-
-			let clr = getRandomColour();
-			const srcEvents = fc_events(parsedCal, tz, { color: clr });
-			const calProps = new ICAL.Component(parsedCal).getAllProperties();
-			calProps.forEach(function (prop) {
-				if (
-					prop.hasOwnProperty("jCal") &&
-					prop["jCal"].indexOf("x-wr-calname") !== -1
-				) {
-					const calName = prop["jCal"][3];
-					if (calName in sources) {
-						console.log("ignoring duplicate: " + calName);
-						return;
-					} else {
-						const es = cal.addEventSource({
-							events: srcEvents,
-							color: clr,
-							id: url,
-						});
-					}
-					var listEl = document.createElement("li");
-					listEl.innerHTML = `<i class="icon-remove del-cal" data-ics=${url}></i> ${calName}`;
-					document.getElementById("calendars").appendChild(listEl);
-					sources[calName] = { url: url, enabled: true };
-					db.put("cals", calName, url);
-				}
-				if (
-					prop.hasOwnProperty("jCal") &&
-					prop["jCal"].indexOf("x-wr-timezone") !== -1
-				) {
-					tz = prop["jCal"][3];
-				}
-			});
-		});
-	}
+	
 
 	function availabilityCheck(info) {
 		info.jsEvent.preventDefault();
@@ -177,7 +130,57 @@
 			e.target.remove(); // not technically needed as refresh is triggered
 		}
 	}
+	function makeRequest(url, callback) {
+		const req = new XMLHttpRequest();
+		req.addEventListener("load", callback);
+		req.open("GET", url);
+		req.send();
+	}
+	async function loadICS(url) {
+		let tz = "Europe/Zurich";
 
+		return makeRequest(url, function () {
+			const parsedCal = ICAL.parse(this.response);
+
+			let clr = getRandomColour();
+			const srcEvents = fc_events(parsedCal, tz, { color: clr });
+			const calProps = new ICAL.Component(parsedCal).getAllProperties();
+			let calName;
+			calProps.forEach(function (prop) {
+				if (
+					prop.hasOwnProperty("jCal") &&
+					prop["jCal"].indexOf("x-wr-calname") !== -1
+				) {
+					calName = prop["jCal"][3];
+					
+					if (calName in sources) {
+						console.log("ignoring duplicate: " + calName);
+						return;
+					} else {
+						const es = cal.addEventSource({
+							events: srcEvents,
+							color: clr,
+							id: url,
+						});
+						$current = [...$current, {id: url, title: calName}]
+					}
+					
+					
+					
+					
+					sources[calName] = { url: url, enabled: true };
+					db.put("cals", calName, url);
+				}
+				if (
+					prop.hasOwnProperty("jCal") &&
+					prop["jCal"].indexOf("x-wr-timezone") !== -1
+				) {
+					tz = prop["jCal"][3];
+				}
+			});
+			return calName
+		});
+	}
 	function configInit() {
 		const queryString = window.location.search;
 		const urlParams = new URLSearchParams(queryString);
@@ -211,18 +214,21 @@
 		document.getElementById("new-ics").onkeydown = addICS;
 		cal.render();
 		cals.forEach(function (ics) {
-			loadICS(ics);
+			loadICS(ics)
 		});
 		loadSaved();
 	}
-
 	async function loadSaved() {
 		const savedCals = await db.getAllKeys("cals");
 		savedCals.forEach(async (key) => {
 			loadICS(key);
+			console.log(key)
 		});
+		
 	}
 
+
+	
 	function toggleClass(element, className) {
 		var classes = element.className.split(/\s+/),
 			length = classes.length,
@@ -240,6 +246,8 @@
 
 		element.className = classes.join(" ");
 	}
+	
+	
 
 	function toggleAll(e) {
 		var active = "active";
@@ -324,19 +332,25 @@
 		<div id="menu">
 			<div class="pure-menu">
 				<a class="pure-menu-heading" href="#">Meetwith.xyz</a>
+				{#if $current.length > 0}
+				<div>
 				<a class="pure-menu-item pure-menu-item-selected"><a
 						href="#"
-						class="pure-menu-subheading pure-menu-link">Current</a>
+						class="pure-menu-subheading pure-menu-link">Current</a></a>
 					<ul class="pure-menu-list" id="calendars" />
+						
+						<MenuList items={$current} type='light'/>
+						</div>
+				{/if}
 					<a
 						href="#"
 						class="pure-menu-subheading pure-menu-link">Saved</a>
 					<ul class="pure-menu-list" id="saved-calendars" />
+						<MenuList items={$saved} type='light'/>
 						<hr>
 						<Modal>
 							<ModalContent/>
 						</Modal>
-				</a>
 			</div>
 		</div>
 

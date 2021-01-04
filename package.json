@@ -30,6 +30,7 @@
     "@fullcalendar/timegrid": "^5.4.0",
     "ical.js": "github:TimDaub/ical.js#feat/detect-module-mode-build",
     "idb": "^5.0.7",
-    "sirv-cli": "^1.0.0"
+    "sirv-cli": "^1.0.0",
+    "svelte-dnd-action": "^0.7.1"
   }
 }
