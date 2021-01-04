@@ -28,6 +28,7 @@
     "@fullcalendar/daygrid": "^5.4.0",
     "@fullcalendar/interaction": "^5.4.0",
     "@fullcalendar/timegrid": "^5.4.0",
+    "ical.js": "github:TimDaub/ical.js#feat/detect-module-mode-build",
     "idb": "^5.0.7",
     "sirv-cli": "^1.0.0"
   }

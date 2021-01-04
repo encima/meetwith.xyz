@@ -5,6 +5,9 @@
 	import dateClick from "@fullcalendar/interaction";
 	import { openDB, DBSchema, deleteDB, wrap, unwrap } from "idb";
 	import { onMount } from "svelte";
+	import Modal from "./Modal.svelte";
+	import ModalContent from "./ModalContent.svelte"
+	import ICAL from "ical.js"
 	export let name: string;
 
 	interface CalSource {
@@ -115,22 +118,6 @@
 				}
 			});
 		});
-	}
-
-	function readCsv(e) {
-		if (e.target.files && e.target.files[0]) {
-			let reader = new FileReader();
-			reader.readAsBinaryString(e.target.files[0]);
-			reader.onload = function (e) {
-				let csvData = [];
-				let lbreak = e.target.result.split("\n");
-				lbreak.forEach((res) => {
-					vals = res.split(",");
-					csvData.push();
-					loadICS(vals[1]);
-				});
-			};
-		}
 	}
 
 	function availabilityCheck(info) {
@@ -314,16 +301,9 @@
 		crossorigin="anonymous" />
 	<link rel="stylesheet" href="/lib/css/style.css" />
 	<script
-		src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js">
-	</script>
-	<script
 		src="https://cdn.jsdelivr.net/npm/fullcalendar@5.3.2/main.min.js"
 		integrity="sha256-mMw9aRRFx9TK/L0dn25GKxH/WH7rtFTp+P9Uma+2+zc="
 		crossorigin="anonymous">
-	</script>
-	<script src="https://unpkg.com/dexie@latest/dist/dexie.js">
-	</script>
-	<script src="https://unpkg.com/ical.js@1.4.0/build/ical.js">
 	</script>
 	<script src="./lib/js/fdb-all.min.js" type="text/javascript">
 	</script>
@@ -352,17 +332,10 @@
 						href="#"
 						class="pure-menu-subheading pure-menu-link">Saved</a>
 					<ul class="pure-menu-list" id="saved-calendars" />
-					<form class="form-inline">
-						<div class="form-group">
-							<label for="files">Load a CSV:</label>
-							<input
-								type="file"
-								id="files"
-								class="form-control"
-								accept=".csv"
-								required />
-						</div>
-					</form>
+						<hr>
+						<Modal>
+							<ModalContent/>
+						</Modal>
 				</a>
 			</div>
 		</div>

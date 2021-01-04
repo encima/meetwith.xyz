@@ -1,12 +1,10 @@
-import App from './App.svelte';
-// import * as iev from './js/ical_events.js';
-// import * as ifc from './js/ical_fullcalendar.js';
+import App from "./App.svelte";
 
 const app = new App({
-	target: document.body,
-	props: {
-		name: 'Meet With'
-	}
+  target: document.body,
+  props: {
+    name: "Meet With",
+  },
 });
 
 export default app;

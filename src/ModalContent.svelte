@@ -1,0 +1,143 @@
+<script>
+  import { getContext } from "svelte";
+  import { fly } from "svelte/transition";
+
+  // import Popup from "./Popup.svelte";
+  // import PopupLong from "./PopupLong.svelte";
+  import Dialog from "./CalManager.svelte";
+  import CloseButton from "./CloseButton.svelte";
+
+  const { open } = getContext("simple-modal");
+
+  let opening = false;
+  let opened = false;
+  let closing = false;
+  let closed = false;
+
+  const showPopup = () => {
+    open(Popup, { message: "It's a popup!" });
+  };
+  const showPopupLong = () => {
+    open(PopupLong, { message: "It's a popup with long text!" });
+  };
+  const showPopupCustom = () => {
+    open(
+      Popup,
+      {
+        message: "It's a customized popup!",
+      },
+      {
+        closeButton: CloseButton,
+        styleBg: {
+          background: "rgba(200, 255, 0, 0.66)",
+        },
+        styleWindow: {
+          border: "2px solid #00beff",
+          boxShadow: "inset 0 0 0 2px white, 0 0 0 2px white",
+          background: "#ff7000",
+        },
+        styleContent: {
+          color: "#9500ff",
+          fontFamily: "Comic Sans",
+          fontStyle: "italic",
+        },
+        styleCloseButton: {
+          borderRadius: 0,
+          boxShadow: "0 0 0 2px white",
+          background: "pink",
+        },
+        transitionWindow: fly,
+        transitionWindowProps: {
+          y: 100,
+          duration: 1000,
+        },
+      },
+      {
+        onOpen: () => {
+          opening = true;
+        },
+        onOpened: () => {
+          opening = false;
+          opened = true;
+        },
+        onClose: () => {
+          opened = false;
+          closing = true;
+        },
+        onClosed: () => {
+          closing = false;
+          closed = true;
+          setTimeout(() => {
+            closed = false;
+          }, 1000);
+        },
+      }
+    );
+  };
+
+  let name;
+  let status = 0;
+
+  const onCancel = (text) => {
+    name = "";
+    status = -1;
+  };
+
+  const onOkay = (text) => {
+    name = text;
+    status = 1;
+  };
+
+  const showDialog = () => {
+    open(
+      Dialog,
+      {
+        message: "Organise Locally Saved Calendars and Views",
+        hasForm: true,
+        onCancel,
+        onOkay,
+      },
+      {
+        closeButton: true,
+        closeOnEsc: true,
+        closeOnOuterClick: true,
+      }
+    );
+  };
+</script>
+
+<section>
+  <button on:click="{showDialog}">Manage</button>
+
+  {#if status === 1}
+  <p>Hi {name}! 👋</p>
+  {:else if status === -1}
+  <p><em>Dialog was canceled</em></p>
+  {/if}
+
+  <div id="state">
+    {#if opening}
+    <p>opening modal...</p>
+    {:else if opened}
+    <p>opened modal!</p>
+    {:else if closing}
+    <p>closing modal...</p>
+    {:else if closed}
+    <p>closed modal!</p>
+    {/if}
+  </div>
+</section>
+
+<style>
+  section {
+    padding-top: 0.5em;
+  }
+
+  #state {
+    position: absolute;
+    top: 0;
+    right: 0;
+    opacity: 0.33;
+    font-size: 0.8em;
+  }
+</style>
