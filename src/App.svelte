@@ -214,14 +214,14 @@
 		document.getElementById("new-ics").onkeydown = addICS;
 		cal.render();
 		cals.forEach(function (ics) {
-			loadICS(ics)
+			loadICS("https://corsproxy.io/?" + ics)
 		});
 		loadSaved();
 	}
 	async function loadSaved() {
 		const savedCals = await db.getAllKeys("cals");
 		savedCals.forEach(async (key) => {
-			loadICS(key);
+			loadICS("https://corsproxy.io/?" + key);
 			console.log(key)
 		});
 		
