@@ -1,5 +1,6 @@
 {
-  "name": "svelte-app",
+  "name": "meetwith.xyz",
+  "homepage": "https://meetwith.xyz",
   "version": "1.0.0",
   "scripts": {
     "build": "rollup -c",
