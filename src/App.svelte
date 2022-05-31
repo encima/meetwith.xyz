@@ -9,8 +9,15 @@
 	import Modal from "./Modal.svelte";
 	import ModalContent from "./ModalContent.svelte";
 	import MenuList from "./List.svelte";
-	import ICAL from "ical.js"
-	export let name: string;
+	import ICAL from "ical.js";
+
+	const groups = {
+		"#cg": [
+			"https://calendar.google.com/calendar/ical/chris%40womenplusplus.ch/public/basic.ics",
+			"https://calendar.google.com/calendar/ical/chrisg%40aiven.io/public/basic.ics",
+			"https://user.fm/calendar/v1-87c9d4e1a326b76c70feda9707e354a9/chris%40gwillia.ms.ics"
+		]
+	}
 	
 	interface CalSource {
 		id?: number;
@@ -130,16 +137,18 @@
 			e.target.remove(); // not technically needed as refresh is triggered
 		}
 	}
-	function makeRequest(url, callback) {
+	function makeRequest(url, proxy, callback) {
 		const req = new XMLHttpRequest();
 		req.addEventListener("load", callback);
+		url = proxy ? "https://corsproxy.io/?" + url : url;
 		req.open("GET", url);
 		req.send();
 	}
+
 	async function loadICS(url) {
 		let tz = "Europe/Zurich";
 
-		return makeRequest(url, function () {
+		return makeRequest(url, true, function () {
 			const parsedCal = ICAL.parse(this.response);
 
 			let clr = getRandomColour();
@@ -165,9 +174,6 @@
 						$current = [...$current, {id: url, title: calName}]
 					}
 					
-					
-					
-					
 					sources[calName] = { url: url, enabled: true };
 					db.put("cals", calName, url);
 				}
@@ -184,7 +190,15 @@
 	function configInit() {
 		const queryString = window.location.search;
 		const urlParams = new URLSearchParams(queryString);
-		const cals = urlParams.getAll("cal");
+		var cals = urlParams.getAll("cal");
+		const groupName = window.location.hash;
+		
+		if (groupName && groups[groupName]) {
+			cals = cals.concat(...groups[groupName])
+		}
+
+		console.log(groups[groupName]);
+
 		const when = urlParams.get("whenDate");
 
 		const el = document.getElementById("calendar");
@@ -214,15 +228,15 @@
 		document.getElementById("new-ics").onkeydown = addICS;
 		cal.render();
 		cals.forEach(function (ics) {
-			loadICS("https://corsproxy.io/?" + ics)
+			loadICS(ics)
 		});
 		loadSaved();
 	}
+
 	async function loadSaved() {
 		const savedCals = await db.getAllKeys("cals");
 		savedCals.forEach(async (key) => {
-			loadICS("https://corsproxy.io/?" + key);
-			console.log(key)
+			loadICS(key);
 		});
 		
 	}
@@ -321,7 +335,6 @@
 	</script>
 </svelte:head>
 <main>
-	<h1>{name}!</h1>
 	<div id="layout">
 		<!-- Menu toggle -->
 		<a href="#menu" id="menuLink" class="menu-link">
@@ -331,19 +344,19 @@
 
 		<div id="menu">
 			<div class="pure-menu">
-				<a class="pure-menu-heading" href="#">Meetwith.xyz</a>
+				<a class="pure-menu-heading" href="/">Meetwith.xyz</a>
 				{#if $current.length > 0}
 				<div>
-				<a class="pure-menu-item pure-menu-item-selected"><a
-						href="#"
-						class="pure-menu-subheading pure-menu-link">Current</a></a>
+				<a class="pure-menu-item pure-menu-item-selected" href="/">
+					<a href="/" class="pure-menu-subheading pure-menu-link">Current</a>
+				</a>
 					<ul class="pure-menu-list" id="calendars" />
 						
 						<MenuList items={$current} type='light'/>
 						</div>
 				{/if}
 					<a
-						href="#"
+						href="/"
 						class="pure-menu-subheading pure-menu-link">Saved</a>
 					<ul class="pure-menu-list" id="saved-calendars" />
 						<MenuList items={$saved} type='light'/>
