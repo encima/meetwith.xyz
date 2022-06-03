@@ -4,53 +4,15 @@
 	import dayGridPlugin from "@fullcalendar/daygrid";
 	import timeGridDay from "@fullcalendar/timegrid";
 	import dateClick from "@fullcalendar/interaction";
-	import { openDB, DBSchema, deleteDB, wrap, unwrap } from "idb";
 	import { onMount } from "svelte";
 	import Modal from "./Modal.svelte";
 	import ModalContent from "./ModalContent.svelte";
 	import MenuList from "./List.svelte";
 	import ICAL from "ical.js";
 
-	const groups = {
-		"#cg": [
-			"https://calendar.google.com/calendar/ical/chris%40womenplusplus.ch/public/basic.ics",
-			"https://calendar.google.com/calendar/ical/chrisg%40aiven.io/public/basic.ics",
-			"https://user.fm/calendar/v1-87c9d4e1a326b76c70feda9707e354a9/chris%40gwillia.ms.ics"
-		]
-	}
-	
-	interface CalSource {
-		id?: number;
-		url?: string;
-		alias?: string;
-		name?: string;
-		group?: string;
-	}
-
-	interface CalDB extends DBSchema {
-		cals: {
-			key: string;
-			value: string;
-		};
-		people: {
-			value: {
-				calendars: string[];
-			};
-			key: string;
-		};
-	}
-
-	let cal, db;
+	let cal;
 
 	onMount(async () => {
-		db = await openDB<CalDB>("mw-db", 1, {
-			upgrade(db) {
-				const calStore = db.createObjectStore("cals");
-
-				const peopleStore = db.createObjectStore("people");
-			},
-		});
-		
 		configInit();
 		
 		(layout = document.getElementById("layout")),
@@ -66,8 +28,6 @@
 		menuLink = document.getElementById("menuLink");
 
 	let sources = {};
-
-	
 
 	function getRandomColour() {
 		var hex = "0123456789ABCDEF";
@@ -147,7 +107,6 @@
 
 	async function loadICS(url) {
 		let tz = "Europe/Zurich";
-
 		return makeRequest(url, true, function () {
 			const parsedCal = ICAL.parse(this.response);
 
@@ -175,7 +134,7 @@
 					}
 					
 					sources[calName] = { url: url, enabled: true };
-					db.put("cals", calName, url);
+
 				}
 				if (
 					prop.hasOwnProperty("jCal") &&
@@ -193,11 +152,17 @@
 		var cals = urlParams.getAll("cal");
 		const groupName = window.location.hash;
 		
-		if (groupName && groups[groupName]) {
-			cals = cals.concat(...groups[groupName])
+		if (groupName) {
+			makeRequest("https://graph.gwill.cloud/api/rest/cals/" + groupName.replace("#", ""), false, function cb() {
+				let userCals = JSON.parse(this.response)
+				if (userCals["meetwith_user_by_pk"] !== null) {
+					userCals["meetwith_user_by_pk"]["cals"].forEach(cal => {
+						cals.push(cal["cal_url"])
+						loadICS(cal["cal_url"])
+					});
+				}
+			})
 		}
-
-		console.log(groups[groupName]);
 
 		const when = urlParams.get("whenDate");
 
@@ -230,7 +195,7 @@
 		cals.forEach(function (ics) {
 			loadICS(ics)
 		});
-		loadSaved();
+		// loadSaved();
 	}
 
 	async function loadSaved() {
@@ -355,15 +320,6 @@
 						<MenuList items={$current} type='light'/>
 						</div>
 				{/if}
-					<a
-						href="/"
-						class="pure-menu-subheading pure-menu-link">Saved</a>
-					<ul class="pure-menu-list" id="saved-calendars" />
-						<MenuList items={$saved} type='light'/>
-						<hr>
-						<Modal>
-							<ModalContent/>
-						</Modal>
 			</div>
 		</div>
 
